@@ -13,7 +13,7 @@ import {
   type Signalement,
   type StatutSignalement,
 } from '@/data/adminSignalements'
-import { formatCoords, offsetLatLng, regionCenter, regionLabel } from '@/lib/regions'
+import { offsetLatLng, regionCenter, regionLabel } from '@/lib/regions'
 
 const PAGE_SIZE = 8
 

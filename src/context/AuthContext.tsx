@@ -38,12 +38,12 @@ function userFromToken(token: string): AuthUser | null {
   return {
     // Le token réel du backend n'a pas de champ "sub" (il utilise "user_id").
     // "sub" reste géré pour compatibilité avec le faux token de dev.
-    id: (payload as Record<string, unknown>).sub ?? (payload as Record<string, unknown>).user_id ?? '',
+    id: String((payload as Record<string, unknown>).sub ?? (payload as Record<string, unknown>).user_id ?? ''),
     email: payload.email,
     // Le backend réel envoie nom/prénom en français (nom = Thiam, prenom = Mamadou).
     // first_name/last_name ne restent utilisés que par le faux token de dev.
-    firstName: (payload as Record<string, unknown>).prenom ?? (payload as Record<string, unknown>).first_name ?? '',
-    lastName: (payload as Record<string, unknown>).nom ?? (payload as Record<string, unknown>).last_name ?? '',
+    firstName: String((payload as Record<string, unknown>).prenom ?? (payload as Record<string, unknown>).first_name ?? ''),
+    lastName: String((payload as Record<string, unknown>).nom ?? (payload as Record<string, unknown>).last_name ?? ''),
     role: normalizeRole(payload.role),
     region: payload.region,
   }

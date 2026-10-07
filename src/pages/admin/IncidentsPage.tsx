@@ -9,7 +9,6 @@ import {
   SOURCE_META,
   STATUT_META,
   type Gravite,
-  type Incident,
   type StatutIncident,
 } from '@/data/adminIncidents'
 import { daysSince, latestDate } from '@/lib/period'
