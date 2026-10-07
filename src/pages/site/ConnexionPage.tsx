@@ -2,8 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import loginVisualUrl from '@/assets/images/login-visual.png'
 import logoUrl from '@/assets/images/saferoad-logo.png'
-import { useAuth } from '@/context/AuthContext'
-import { ApiError, login as loginRequest } from '@/lib/api'
+import { normalizeRole, useAuth } from '@/context/AuthContext'
+import { ApiError, login as loginRequest, loginConducteur as loginConducteurRequest } from '@/lib/api'
 import { decodeJwt } from '@/lib/jwt'
 import { PATHS } from '@/routes/paths'
 import { roleHome } from '@/routes/ProtectedRoute'
@@ -11,8 +11,9 @@ import type { UserRole } from '@/types/auth'
 
 const ROLES: { key: UserRole; label: string }[] = [
   { key: 'conducteur', label: 'Conducteur' },
-  { key: 'sous_admin', label: 'Sous-Admin' },
+  { key: 'sous_admin', label: 'Admin Régional' },
   { key: 'super_admin', label: 'Super Admin' },
+  { key: 'anaser', label: 'ANASER' },
 ]
 
 const FEATURES: [string, string][] = [
@@ -60,7 +61,11 @@ export function ConnexionPage() {
 
   const redirectAfterLogin = (token: string) => {
     const payload = decodeJwt(token)
-    const dest = from ?? (payload ? roleHome(payload.role as UserRole) : PATHS.home)
+    // Même normalisation que AuthContext.userFromToken() (le backend renvoie
+    // role="admin" pour l'Admin Régional) — sinon roleHome() reçoit la valeur
+    // brute, ne la reconnaît pas, et renvoie vers /connexion : on donne
+    // l'impression que la connexion ne fait rien.
+    const dest = from ?? (payload ? roleHome(normalizeRole(payload.role)) : PATHS.home)
     navigate(dest, { replace: true })
   }
 
@@ -73,7 +78,13 @@ export function ConnexionPage() {
     }
     setLoading(true)
     try {
-      const { access } = await loginRequest(email.trim(), password)
+      // Conducteur vit dans un modèle Django séparé d'Administrateur (sous_admin /
+      // super_admin / anaser) : deux endpoints de connexion distincts côté backend,
+      // voir lib/api.ts (login vs loginConducteur).
+      const { access } =
+        role === 'conducteur'
+          ? await loginConducteurRequest(email.trim(), password)
+          : await loginRequest(email.trim(), password)
       login(access)
       redirectAfterLogin(access)
     } catch (err) {
@@ -158,7 +169,7 @@ export function ConnexionPage() {
           <h2 className="text-2xl font-extrabold tracking-tight text-ink">Bienvenue !</h2>
           <p className="mt-2 text-sm text-body">Connectez-vous à votre espace.</p>
 
-          <div className="mt-6 grid grid-cols-3 gap-2">
+          <div className="mt-6 grid grid-cols-4 gap-2">
             {ROLES.map((r) => (
               <button
                 key={r.key}

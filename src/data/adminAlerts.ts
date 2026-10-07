@@ -17,7 +17,7 @@ export interface AdminAlert {
   meta?: string
 }
 
-/** Fil d'alertes de la région du Sous-Admin, toutes sources confondues. */
+/** Fil d'alertes de la région de l'Admin Régional, toutes sources confondues. */
 export const ADMIN_ALERTS: AdminAlert[] = [
   {
     id: 'aa1',

@@ -9,10 +9,10 @@ const NAV_ITEMS: SidebarNavItem[] = [
   { key: 'monitoring', icon: 'sensors', label: 'Monitoring IoT', to: PATHS.admin.monitoring },
   { key: 'carte', icon: 'map', label: 'Carte', to: PATHS.admin.carte },
   { key: 'incidents', icon: 'report', label: 'Incidents', to: PATHS.admin.incidents },
+  { key: 'signalements', icon: 'campaign', label: 'Signalements', to: PATHS.admin.signalements },
   { key: 'zones', icon: 'fact_check', label: 'Zones à valider', to: PATHS.admin.zones },
   { key: 'alertes', icon: 'notifications', label: 'Alertes', to: PATHS.admin.alertes },
   { key: 'boitiers', icon: 'memory', label: 'Boîtiers', to: PATHS.admin.boitiers },
-  { key: 'statistiques', icon: 'bar_chart', label: 'Statistiques', to: PATHS.admin.statistiques },
   { key: 'historique', icon: 'history', label: 'Historique', to: PATHS.admin.historique },
 ]
 
@@ -30,7 +30,7 @@ export function AdminLayout() {
       roleMeta={user?.region}
       userInitials={initials}
       userName={user ? `${user.firstName} ${user.lastName}` : ''}
-      userRole={user?.region ? `Sous-Admin · ${user.region}` : 'Sous-Admin'}
+      userRole={user?.region ? `Admin Régional · ${user.region}` : 'Admin Régional'}
       onProfileClick={() => {}}
       onLogoutClick={() => {
         logout()

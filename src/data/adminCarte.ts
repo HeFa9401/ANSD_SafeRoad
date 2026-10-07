@@ -7,11 +7,23 @@ export interface ConnectedVehicle {
   status: VehicleStatus
   speed: number
   lastUpdate: string
-  /** Trace récente du trajet — le dernier point est la position actuelle. */
+  /**
+   * Trace récente du trajet — le dernier point est la position actuelle.
+   * Chaque point est un delta [lat, lng] par rapport au centre de la région
+   * connectée (src/lib/regions.ts), pas une coordonnée absolue — sinon les
+   * véhicules resteraient affichés autour de Dakar même quand la carte est
+   * recentrée sur la région de l'administrateur connecté.
+   */
   path: [number, number][]
 }
 
-/** Véhicules connectés circulant (ou récemment vus) dans la région du Sous-Admin. */
+/**
+ * Véhicules connectés circulant (ou récemment vus) dans la région de
+ * l'Admin Régional. Les trajets ont été conçus pour amener chaque véhicule
+ * près d'une des zones à risque de ADMIN_REGION_ZONES (adminHome.ts) — v1
+ * termine sur z1, v2 sur z3, v3 sur z2, v4 sur z4, v5 sur z5 — ce lien est
+ * conservé ici via les mêmes offsets finaux.
+ */
 export const CONNECTED_VEHICLES: ConnectedVehicle[] = [
   {
     id: 'v1',
@@ -21,10 +33,10 @@ export const CONNECTED_VEHICLES: ConnectedVehicle[] = [
     speed: 62,
     lastUpdate: 'il y a 30 s',
     path: [
-      [14.7801, -17.3766],
-      [14.7732, -17.3811],
-      [14.7688, -17.3844],
-      [14.7645, -17.3877],
+      [0.0641, 0.0234],
+      [0.0572, 0.0189],
+      [0.0528, 0.0156],
+      [0.0485, 0.0123],
     ],
   },
   {
@@ -35,9 +47,9 @@ export const CONNECTED_VEHICLES: ConnectedVehicle[] = [
     speed: 0,
     lastUpdate: 'il y a 4 min',
     path: [
-      [14.694, -17.4498],
-      [14.6975, -17.4527],
-      [14.7008, -17.4559],
+      [-0.022, -0.0498],
+      [-0.0185, -0.0527],
+      [-0.0152, -0.0559],
     ],
   },
   {
@@ -48,10 +60,10 @@ export const CONNECTED_VEHICLES: ConnectedVehicle[] = [
     speed: 45,
     lastUpdate: 'il y a 45 s',
     path: [
-      [14.6612, -17.4291],
-      [14.665, -17.4331],
-      [14.6689, -17.4358],
-      [14.6726, -17.4381],
+      [-0.0548, -0.0291],
+      [-0.051, -0.0331],
+      [-0.0471, -0.0358],
+      [-0.0434, -0.0381],
     ],
   },
   {
@@ -62,10 +74,10 @@ export const CONNECTED_VEHICLES: ConnectedVehicle[] = [
     speed: 71,
     lastUpdate: 'il y a 15 s',
     path: [
-      [14.741, -17.402],
-      [14.7481, -17.3979],
-      [14.7519, -17.3941],
-      [14.7549, -17.3903],
+      [0.025, -0.002],
+      [0.0321, 0.0021],
+      [0.0359, 0.0059],
+      [0.0389, 0.0097],
     ],
   },
   {
@@ -76,9 +88,9 @@ export const CONNECTED_VEHICLES: ConnectedVehicle[] = [
     speed: 0,
     lastUpdate: 'il y a 25 min',
     path: [
-      [14.7189, -17.4581],
-      [14.7217, -17.4613],
-      [14.7245, -17.4644],
+      [0.0029, -0.0581],
+      [0.0057, -0.0613],
+      [0.0085, -0.0644],
     ],
   },
 ]

@@ -35,7 +35,7 @@ export const DASHBOARD_KPIS: DashboardKpi[] = [
   },
   {
     icon: 'flag',
-    tint: '#0e9e7a',
+    tint: '#0F766E',
     soft: '#e7f5f0',
     value: '3',
     label: 'Signalements envoyés',

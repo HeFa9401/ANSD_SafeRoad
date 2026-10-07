@@ -322,7 +322,7 @@ export function AccueilPage() {
                   >
                     <span
                       className="relative mt-0.5 h-6 w-[42px] flex-none rounded-full transition-colors"
-                      style={{ background: on ? '#0e9e7a' : '#cbd9e0' }}
+                      style={{ background: on ? '#0F766E' : '#cbd9e0' }}
                     >
                       <span
                         className="absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow transition-all"

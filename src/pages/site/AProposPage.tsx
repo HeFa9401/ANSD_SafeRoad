@@ -47,7 +47,7 @@ export function AProposPage() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] bg-gradient-to-br from-[#0a2b3d] via-[#0a5867] to-[#0e9e7a] p-4 text-white shadow-[0_20px_38px_rgba(10,43,61,0.18)] sm:p-5">
+              <div className="rounded-[20px] bg-gradient-to-br from-[#0a2b3d] via-[#0a5867] to-[#0F766E] p-4 text-white shadow-[0_20px_38px_rgba(10,43,61,0.18)] sm:p-5">
                 <div className="rounded-[18px] border border-white/15 bg-white/6 p-4 backdrop-blur-sm">
                   <div className="flex items-center justify-between gap-3">
                     <div>

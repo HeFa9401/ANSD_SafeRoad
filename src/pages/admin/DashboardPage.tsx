@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
+import { Link } from 'react-router-dom'
 import 'leaflet/dist/leaflet.css'
 import { useAuth } from '@/context/AuthContext'
 import {
@@ -13,8 +14,8 @@ import {
   WEEK_STATS,
   type RiskLevel,
 } from '@/data/adminHome'
-
-const DAKAR_CENTER: [number, number] = [14.716, -17.4]
+import { offsetLatLng, regionCenter, regionLabel } from '@/lib/regions'
+import { PATHS } from '@/routes/paths'
 
 const LEVEL_META: Record<RiskLevel, { label: string; color: string; soft: string; text: string }> = {
   critique: { label: 'Critique', color: '#dc3a2f', soft: '#fdeeec', text: '#dc3a2f' },
@@ -87,7 +88,8 @@ function IncidentDonut() {
 
 export function DashboardPage() {
   const { user } = useAuth()
-  const region = user?.region ?? 'Dakar'
+  const region = regionLabel(user?.region)
+  const center = useMemo(() => regionCenter(user?.region), [user?.region])
   const [clock, setClock] = useState(() => new Date())
   const [metric, setMetric] = useState<'incidents' | 'alertes' | 'zones'>('incidents')
 
@@ -143,7 +145,11 @@ export function DashboardPage() {
 
       <section className="mx-6 mt-4.5 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         {ADMIN_KPIS.map((kpi) => (
-          <div key={kpi.label} className="min-w-0 rounded-2xl border border-line bg-white p-4.5 shadow-card">
+          <Link
+            key={kpi.label}
+            to={kpi.to}
+            className="min-w-0 rounded-2xl border border-line bg-white p-4.5 shadow-card transition-shadow hover:shadow-card-hover"
+          >
             <div className="flex items-center gap-3.5">
               <span
                 className="flex h-11 w-11 flex-none items-center justify-center overflow-hidden rounded-full"
@@ -163,7 +169,7 @@ export function DashboardPage() {
               </span>
               <span className="font-bold text-brand-600">{kpi.cta} →</span>
             </div>
-          </div>
+          </Link>
         ))}
       </section>
 
@@ -178,7 +184,7 @@ export function DashboardPage() {
             </p>
           </div>
           <div className="relative h-[360px] w-full">
-            <MapContainer center={DAKAR_CENTER} zoom={11} className="h-full w-full" scrollWheelZoom={false}>
+            <MapContainer center={center} zoom={11} className="h-full w-full" scrollWheelZoom={false}>
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -188,7 +194,7 @@ export function DashboardPage() {
                 return (
                   <CircleMarker
                     key={zone.id}
-                    center={[zone.lat, zone.lng]}
+                    center={offsetLatLng(center, zone.offset)}
                     radius={8 + Math.min(zone.incidents / 3, 10)}
                     pathOptions={{ color: '#fff', weight: 2, fillColor: meta.color, fillOpacity: 0.9 }}
                   >
@@ -229,9 +235,9 @@ export function DashboardPage() {
         <div className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3.5 flex items-center justify-between">
             <p className="m-0 text-sm font-extrabold text-ink">Événements récents</p>
-            <a href="#" className="text-xs font-bold text-brand-600">
+            <Link to={PATHS.admin.historique} className="text-xs font-bold text-brand-600">
               Voir tout →
-            </a>
+            </Link>
           </div>
           <ul className="flex flex-col gap-3.5">
             {ADMIN_EVENTS.map((ev) => (
@@ -265,9 +271,9 @@ export function DashboardPage() {
         <div className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3.5 flex items-center justify-between">
             <p className="m-0 text-sm font-extrabold text-ink">Zones à risque de votre région</p>
-            <a href="#" className="text-xs font-bold text-brand-600">
+            <Link to={PATHS.admin.carte} className="text-xs font-bold text-brand-600">
               Voir toutes →
-            </a>
+            </Link>
           </div>
           <ul className="flex flex-col gap-3">
             {ADMIN_REGION_ZONES.map((zone) => {
@@ -320,9 +326,9 @@ export function DashboardPage() {
         <div className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3.5 flex items-center justify-between">
             <p className="m-0 text-sm font-extrabold text-ink">Top localités à surveiller</p>
-            <a href="#" className="text-xs font-bold text-brand-600">
+            <Link to={PATHS.admin.carte} className="text-xs font-bold text-brand-600">
               Voir plus →
-            </a>
+            </Link>
           </div>
           <ul className="flex flex-col gap-3">
             {TOP_LOCALITIES.map((loc) => {
@@ -355,9 +361,9 @@ export function DashboardPage() {
         <div className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3.5 flex items-center justify-between">
             <p className="m-0 text-sm font-extrabold text-ink">Zones à valider</p>
-            <a href="#" className="text-xs font-bold text-brand-600">
+            <Link to={PATHS.admin.zones} className="text-xs font-bold text-brand-600">
               Voir toutes →
-            </a>
+            </Link>
           </div>
           <ul className="flex flex-col gap-3">
             {PENDING_ZONES.map((zone) => {

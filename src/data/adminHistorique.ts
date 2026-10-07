@@ -1,5 +1,10 @@
 export interface RegionalTrip {
   id: string
+  /**
+   * Suffixe de la plaque, SANS le préfixe régional (ex. "2145-AB").
+   * Le préfixe ("DL-", "DK-"…) dépend de la région du compte connecté et
+   * est ajouté à l'affichage via regionPlatePrefix() — voir src/lib/regions.ts.
+   */
   vehicle: string
   driver: string
   route: string
@@ -14,9 +19,9 @@ export interface RegionalTrip {
 export const REGIONAL_TRIPS: RegionalTrip[] = [
   {
     id: 'rt1',
-    vehicle: 'DK-2145-AB',
+    vehicle: '2145-AB',
     driver: 'Ibrahima Sarr',
-    route: 'Yoff → RN1 Km 45',
+    route: 'Axe principal → RN3 – Km 12',
     date: '15/09/2026',
     duration: '28 min',
     km: 19,
@@ -25,9 +30,9 @@ export const REGIONAL_TRIPS: RegionalTrip[] = [
   },
   {
     id: 'rt2',
-    vehicle: 'DK-4471-EF',
+    vehicle: '4471-EF',
     driver: 'Moussa Diop',
-    route: 'Médina → Avenue Bourguiba',
+    route: 'Zone résidentielle → Avenue principale',
     date: '15/09/2026',
     duration: '22 min',
     km: 14,
@@ -36,9 +41,9 @@ export const REGIONAL_TRIPS: RegionalTrip[] = [
   },
   {
     id: 'rt3',
-    vehicle: 'DK-1187-GH',
+    vehicle: '1187-GH',
     driver: 'Fatou Camara',
-    route: 'Guédiawaye → Pikine',
+    route: 'Périphérie → Centre-ville',
     date: '15/09/2026',
     duration: '19 min',
     km: 11,
@@ -47,9 +52,9 @@ export const REGIONAL_TRIPS: RegionalTrip[] = [
   },
   {
     id: 'rt4',
-    vehicle: 'DK-0932-CD',
+    vehicle: '0932-CD',
     driver: 'Aïssatou Ndao',
-    route: 'Plateau → Rond-point Liberté',
+    route: 'Centre-ville → Rond-point central',
     date: '14/09/2026',
     duration: '15 min',
     km: 8,
@@ -58,9 +63,9 @@ export const REGIONAL_TRIPS: RegionalTrip[] = [
   },
   {
     id: 'rt5',
-    vehicle: 'DK-2803-IJ',
+    vehicle: '2803-IJ',
     driver: 'Cheikh Fall',
-    route: 'Ouakam → Technopole',
+    route: 'Zone résidentielle → Zone technopole',
     date: '14/09/2026',
     duration: '24 min',
     km: 16,
@@ -69,9 +74,9 @@ export const REGIONAL_TRIPS: RegionalTrip[] = [
   },
   {
     id: 'rt6',
-    vehicle: 'DK-2145-AB',
+    vehicle: '2145-AB',
     driver: 'Ibrahima Sarr',
-    route: 'RN1 Km 45 → Centre-ville',
+    route: 'RN3 – Km 12 → Centre-ville',
     date: '13/09/2026',
     duration: '31 min',
     km: 21,
@@ -80,9 +85,9 @@ export const REGIONAL_TRIPS: RegionalTrip[] = [
   },
   {
     id: 'rt7',
-    vehicle: 'DK-4471-EF',
+    vehicle: '4471-EF',
     driver: 'Moussa Diop',
-    route: 'Avenue Bourguiba → Médina',
+    route: 'Avenue principale → Zone résidentielle',
     date: '13/09/2026',
     duration: '20 min',
     km: 13,
@@ -91,9 +96,9 @@ export const REGIONAL_TRIPS: RegionalTrip[] = [
   },
   {
     id: 'rt8',
-    vehicle: 'DK-1187-GH',
+    vehicle: '1187-GH',
     driver: 'Fatou Camara',
-    route: 'Pikine → Route de Rufisque',
+    route: 'Centre-ville → Route de contournement',
     date: '12/09/2026',
     duration: '17 min',
     km: 9,
@@ -107,6 +112,7 @@ export type DeviceEventType = 'connexion' | 'deconnexion' | 'maintenance'
 export interface DeviceHistoryEntry {
   id: string
   deviceId: string
+  /** Suffixe de plaque uniquement — voir RegionalTrip.vehicle ci-dessus. */
   vehicle?: string
   event: DeviceEventType
   date: string
@@ -123,21 +129,21 @@ export const DEVICE_HISTORY: DeviceHistoryEntry[] = [
     event: 'deconnexion',
     date: '15/09/2026',
     time: '14:18',
-    detail: 'Pikine — perte de signal depuis 42 min',
+    detail: 'Périphérie — perte de signal depuis 42 min',
   },
   {
     id: 'dh2',
     deviceId: 'SR-07',
-    vehicle: 'DK-2803-IJ',
+    vehicle: '2803-IJ',
     event: 'deconnexion',
     date: '15/09/2026',
     time: '13:35',
-    detail: 'Technopole — coupure prolongée',
+    detail: 'Zone technopole — coupure prolongée',
   },
   {
     id: 'dh3',
     deviceId: 'SR-01',
-    vehicle: 'DK-2145-AB',
+    vehicle: '2145-AB',
     event: 'connexion',
     date: '15/09/2026',
     time: '08:02',
@@ -146,7 +152,7 @@ export const DEVICE_HISTORY: DeviceHistoryEntry[] = [
   {
     id: 'dh4',
     deviceId: 'SR-05',
-    vehicle: 'DK-4471-EF',
+    vehicle: '4471-EF',
     event: 'maintenance',
     date: '14/09/2026',
     time: '16:40',
@@ -155,7 +161,7 @@ export const DEVICE_HISTORY: DeviceHistoryEntry[] = [
   {
     id: 'dh5',
     deviceId: 'SR-02',
-    vehicle: 'DK-0932-CD',
+    vehicle: '0932-CD',
     event: 'connexion',
     date: '14/09/2026',
     time: '07:55',
@@ -164,7 +170,7 @@ export const DEVICE_HISTORY: DeviceHistoryEntry[] = [
   {
     id: 'dh6',
     deviceId: 'SR-06',
-    vehicle: 'DK-1187-GH',
+    vehicle: '1187-GH',
     event: 'connexion',
     date: '13/09/2026',
     time: '09:12',

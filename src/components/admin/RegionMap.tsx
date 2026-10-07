@@ -4,8 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { AdminZone, RiskLevel } from '@/data/adminHome'
 import { CONNECTED_VEHICLES, VEHICLE_STATUS_META, type ConnectedVehicle } from '@/data/adminCarte'
-
-const DAKAR_CENTER: [number, number] = [14.716, -17.4]
+import { offsetLatLng } from '@/lib/regions'
 
 const LEVEL_META: Record<RiskLevel, { label: string; color: string; soft: string; text: string }> = {
   critique: { label: 'Critique', color: '#dc3a2f', soft: '#fdeeec', text: '#dc3a2f' },
@@ -24,15 +23,17 @@ function vehicleIcon(color: string) {
 }
 
 interface RegionMapProps {
+  /** Centre réel de la carte — le centre de la région connectée (src/lib/regions.ts), pas Dakar en dur. */
+  center: [number, number]
   zones: AdminZone[]
   vehicles?: ConnectedVehicle[]
   showZones: boolean
   showVehicles: boolean
 }
 
-export function RegionMap({ zones, vehicles = CONNECTED_VEHICLES, showZones, showVehicles }: RegionMapProps) {
+export function RegionMap({ center, zones, vehicles = CONNECTED_VEHICLES, showZones, showVehicles }: RegionMapProps) {
   return (
-    <MapContainer center={DAKAR_CENTER} zoom={12} className="h-full w-full" zoomControl={false}>
+    <MapContainer center={center} zoom={12} className="h-full w-full" zoomControl={false}>
       <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       {showZones &&
@@ -41,7 +42,7 @@ export function RegionMap({ zones, vehicles = CONNECTED_VEHICLES, showZones, sho
           return (
             <CircleMarker
               key={zone.id}
-              center={[zone.lat, zone.lng]}
+              center={offsetLatLng(center, zone.offset)}
               radius={10 + Math.min(zone.incidents / 3, 12)}
               pathOptions={{ color: '#fff', weight: 2, fillColor: meta.color, fillOpacity: 0.85 }}
             >
@@ -67,11 +68,12 @@ export function RegionMap({ zones, vehicles = CONNECTED_VEHICLES, showZones, sho
       {showVehicles &&
         vehicles.map((v) => {
           const meta = VEHICLE_STATUS_META[v.status]
-          const current = v.path[v.path.length - 1]
+          const path = v.path.map((point) => offsetLatLng(center, point))
+          const current = path[path.length - 1]
           return (
             <Fragment key={v.id}>
               <Polyline
-                positions={v.path}
+                positions={path}
                 pathOptions={{
                   color: meta.color,
                   weight: 3,

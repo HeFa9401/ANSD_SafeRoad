@@ -15,15 +15,36 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
+/**
+ * Le backend nomme le rôle Admin Régional "admin" (Administrateur.Role.ADMIN),
+ * mais tout le routage frontend (ProtectedRoute, roleHome, AppRoutes) est
+ * bâti sur le littéral "sous_admin" du type UserRole. Sans cette
+ * normalisation, ProtectedRoute rejette un token réel avec role="admin"
+ * (il ne matche aucun allowedRoles) et roleHome('admin') tombe dans son
+ * cas par défaut, qui renvoie vers /connexion.
+ *
+ * Exportée pour que ConnexionPage.tsx (qui décode aussi le token pour
+ * calculer la destination post-connexion) applique la même règle — sinon
+ * on se retrouve avec deux décodages du même token qui divergent.
+ */
+export function normalizeRole(rawRole: unknown): UserRole {
+  if (rawRole === 'admin') return 'sous_admin'
+  return rawRole as UserRole
+}
+
 function userFromToken(token: string): AuthUser | null {
   const payload = decodeJwt(token)
   if (!payload || isJwtExpired(payload)) return null
   return {
-    id: payload.sub,
+    // Le token réel du backend n'a pas de champ "sub" (il utilise "user_id").
+    // "sub" reste géré pour compatibilité avec le faux token de dev.
+    id: (payload as Record<string, unknown>).sub ?? (payload as Record<string, unknown>).user_id ?? '',
     email: payload.email,
-    firstName: payload.first_name ?? '',
-    lastName: payload.last_name ?? '',
-    role: payload.role as UserRole,
+    // Le backend réel envoie nom/prénom en français (nom = Thiam, prenom = Mamadou).
+    // first_name/last_name ne restent utilisés que par le faux token de dev.
+    firstName: (payload as Record<string, unknown>).prenom ?? (payload as Record<string, unknown>).first_name ?? '',
+    lastName: (payload as Record<string, unknown>).nom ?? (payload as Record<string, unknown>).last_name ?? '',
+    role: normalizeRole(payload.role),
     region: payload.region,
   }
 }

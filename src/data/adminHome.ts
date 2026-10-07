@@ -1,3 +1,5 @@
+import { PATHS } from '@/routes/paths'
+
 export type RiskLevel = 'critique' | 'vigilance' | 'normale'
 
 export interface AdminKpi {
@@ -9,15 +11,19 @@ export interface AdminKpi {
   trend: string
   trendIcon: 'up' | 'down' | 'flat'
   cta: string
+  /** Route vers laquelle le CTA de la carte redirige. */
+  to: string
 }
 
-/** Indicateurs clés de la région — vue d'ensemble du jour pour le Sous-Admin. */
+/** Indicateurs clés de la région — vue d'ensemble du jour pour l'Admin Régional. */
 export const ADMIN_KPIS: AdminKpi[] = [
-  { icon: 'directions_car', tint: '#2b6cb0', soft: '#e8f0f9', value: '8', label: 'Boîtiers IoT', trend: '1 en ligne', trendIcon: 'up', cta: 'Voir tous' },
-  { icon: 'report', tint: '#dc3a2f', soft: '#fdeeec', value: '3', label: "Incidents aujourd'hui", trend: '-1 vs hier', trendIcon: 'down', cta: 'Voir détails' },
-  { icon: 'notifications_active', tint: '#e8940c', soft: '#fdf4e6', value: '5', label: 'Alertes actives', trend: '0 vs hier', trendIcon: 'flat', cta: 'Voir toutes' },
-  { icon: 'crisis_alert', tint: '#7c3aed', soft: '#f1eafe', value: '7', label: 'Zones à risque', trend: 'stable', trendIcon: 'flat', cta: 'Voir la carte' },
-  { icon: 'show_chart', tint: '#0e9e7a', soft: '#e7f5f0', value: '32', label: 'Trajets surveillés', trend: '12%', trendIcon: 'up', cta: 'Voir statistiques' },
+  { icon: 'directions_car', tint: '#2b6cb0', soft: '#e8f0f9', value: '8', label: 'Boîtiers IoT', trend: '1 en ligne', trendIcon: 'up', cta: 'Voir tous', to: PATHS.admin.monitoring },
+  { icon: 'report', tint: '#dc3a2f', soft: '#fdeeec', value: '3', label: "Incidents aujourd'hui", trend: '-1 vs hier', trendIcon: 'down', cta: 'Voir détails', to: PATHS.admin.incidents },
+  { icon: 'notifications_active', tint: '#e8940c', soft: '#fdf4e6', value: '5', label: 'Alertes actives', trend: '0 vs hier', trendIcon: 'flat', cta: 'Voir toutes', to: PATHS.admin.alertes },
+  { icon: 'crisis_alert', tint: '#7c3aed', soft: '#f1eafe', value: '7', label: 'Zones à risque', trend: 'stable', trendIcon: 'flat', cta: 'Voir la carte', to: PATHS.admin.carte },
+  /* La page Statistiques dédiée a été retirée : ce CTA renvoie maintenant vers Historique,
+     qui porte désormais la section « Statistiques » de la région. */
+  { icon: 'show_chart', tint: '#0F766E', soft: '#e7f5f0', value: '32', label: 'Trajets surveillés', trend: '12%', trendIcon: 'up', cta: "Voir l'historique", to: PATHS.admin.historique },
 ]
 
 export interface AdminEvent {
@@ -31,7 +37,11 @@ export interface AdminEvent {
   badge: { label: string; tint: string; soft: string } | null
 }
 
-/** Fil d'événements récents toutes sources confondues (incidents, capteurs, résolutions). */
+/**
+ * Fil d'événements récents toutes sources confondues (incidents, capteurs,
+ * résolutions). Lieux génériques (plus de noms de quartiers dakarois) pour
+ * rester cohérents quelle que soit la région réellement connectée.
+ */
 export const ADMIN_EVENTS: AdminEvent[] = [
   {
     id: 'e1',
@@ -39,7 +49,7 @@ export const ADMIN_EVENTS: AdminEvent[] = [
     tint: '#dc3a2f',
     soft: '#fdeeec',
     title: 'Accident signalé',
-    location: 'RN1 – Km 45 (Dakar)',
+    location: 'RN3 – Km 12',
     ago: 'il y a 12 min',
     badge: { label: 'Critique', tint: '#dc3a2f', soft: '#fdeeec' },
   },
@@ -49,7 +59,7 @@ export const ADMIN_EVENTS: AdminEvent[] = [
     tint: '#e8940c',
     soft: '#fdf4e6',
     title: 'Freinage brusque détecté',
-    location: 'Avenue Bourguiba (Dakar)',
+    location: 'Avenue principale',
     ago: 'il y a 28 min',
     badge: { label: 'Vigilance', tint: '#e8940c', soft: '#fdf4e6' },
   },
@@ -59,7 +69,7 @@ export const ADMIN_EVENTS: AdminEvent[] = [
     tint: '#2b6cb0',
     soft: '#e8f0f9',
     title: 'Boîtier hors ligne',
-    location: 'SR-03 (Pikine)',
+    location: 'SR-03 (périphérie)',
     ago: 'il y a 42 min',
     badge: null,
   },
@@ -69,7 +79,7 @@ export const ADMIN_EVENTS: AdminEvent[] = [
     tint: '#1f9d55',
     soft: '#e9f6ee',
     title: 'Retour à la normale',
-    location: 'Zone de Fann (Dakar)',
+    location: 'Zone technopole',
     ago: 'il y a 1 h',
     badge: { label: 'Résolu', tint: '#1f9d55', soft: '#e9f6ee' },
   },
@@ -78,21 +88,25 @@ export const ADMIN_EVENTS: AdminEvent[] = [
 export interface AdminZone {
   id: string
   name: string
-  lat: number
-  lng: number
+  /** Delta [lat, lng] en degrés par rapport au centre de la région connectée (src/lib/regions.ts). */
+  offset: [number, number]
   incidents: number
   avgSpeed: number
   level: RiskLevel
   lastDetection: string
 }
 
-/** Zones à risque de la région — alimente la carte et le classement de droite. */
+/**
+ * Zones à risque de la région — alimente la carte régionale (RegionMap) et
+ * le classement de droite du dashboard. Positions relatives au centre de la
+ * région connectée, pas de coordonnées absolues (voir src/lib/regions.ts).
+ */
 export const ADMIN_REGION_ZONES: AdminZone[] = [
-  { id: 'z1', name: 'RN1 – Km 45 (Dakar)', lat: 14.7645, lng: -17.3877, incidents: 23, avgSpeed: 87, level: 'critique', lastDetection: 'il y a 12 min' },
-  { id: 'z2', name: 'Avenue Bourguiba (Dakar)', lat: 14.6726, lng: -17.4381, incidents: 12, avgSpeed: 64, level: 'vigilance', lastDetection: 'il y a 28 min' },
-  { id: 'z3', name: 'Rond-point Liberté (Dakar)', lat: 14.7008, lng: -17.4559, incidents: 8, avgSpeed: 32, level: 'vigilance', lastDetection: 'il y a 51 min' },
-  { id: 'z4', name: 'Pikine – Route de Rufisque', lat: 14.7549, lng: -17.3903, incidents: 6, avgSpeed: 48, level: 'normale', lastDetection: 'il y a 1 h' },
-  { id: 'z5', name: 'Technopole (Dakar)', lat: 14.7245, lng: -17.4644, incidents: 4, avgSpeed: 42, level: 'normale', lastDetection: 'il y a 2 h' },
+  { id: 'z1', name: 'RN3 – Km 12', offset: [0.0485, 0.0123], incidents: 23, avgSpeed: 87, level: 'critique', lastDetection: 'il y a 12 min' },
+  { id: 'z2', name: 'Avenue principale', offset: [-0.0434, -0.0381], incidents: 12, avgSpeed: 64, level: 'vigilance', lastDetection: 'il y a 28 min' },
+  { id: 'z3', name: 'Rond-point central', offset: [-0.0152, -0.0559], incidents: 8, avgSpeed: 32, level: 'vigilance', lastDetection: 'il y a 51 min' },
+  { id: 'z4', name: 'Route de contournement', offset: [0.0389, 0.0097], incidents: 6, avgSpeed: 48, level: 'normale', lastDetection: 'il y a 1 h' },
+  { id: 'z5', name: 'Zone technopole', offset: [0.0085, -0.0644], incidents: 4, avgSpeed: 42, level: 'normale', lastDetection: 'il y a 2 h' },
 ]
 
 export interface TopLocality {
@@ -103,13 +117,17 @@ export interface TopLocality {
   level: RiskLevel
 }
 
-/** Localités les plus actives sur 7 jours, triées par sévérité puis volume. */
+/**
+ * Localités les plus actives sur 7 jours, triées par sévérité puis volume.
+ * Libellés génériques (plus de quartiers de Dakar) pour rester cohérents
+ * quelle que soit la région connectée.
+ */
 export const TOP_LOCALITIES: TopLocality[] = [
-  { id: 'l1', name: 'Yoff', incidents: 5, alerts: 3, level: 'critique' },
-  { id: 'l2', name: 'Pikine', incidents: 4, alerts: 2, level: 'vigilance' },
-  { id: 'l3', name: 'Almadies', incidents: 2, alerts: 1, level: 'vigilance' },
-  { id: 'l4', name: 'Hann Plateau', incidents: 2, alerts: 1, level: 'normale' },
-  { id: 'l5', name: 'Grand Dakar', incidents: 1, alerts: 0, level: 'normale' },
+  { id: 'l1', name: 'Zone nord', incidents: 5, alerts: 3, level: 'critique' },
+  { id: 'l2', name: 'Périphérie', incidents: 4, alerts: 2, level: 'vigilance' },
+  { id: 'l3', name: 'Zone résidentielle', incidents: 2, alerts: 1, level: 'vigilance' },
+  { id: 'l4', name: 'Zone est', incidents: 2, alerts: 1, level: 'normale' },
+  { id: 'l5', name: 'Centre-ville', incidents: 1, alerts: 0, level: 'normale' },
 ]
 
 export interface PendingZone {
@@ -119,11 +137,11 @@ export interface PendingZone {
   detectedAt: string
 }
 
-/** File d'attente de validation — extrait des zones détectées par le système, en attente d'une décision du Sous-Admin. */
+/** File d'attente de validation — extrait des zones détectées par le système, en attente d'une décision de l'Admin Régional. */
 export const PENDING_ZONES: PendingZone[] = [
-  { id: 'p1', name: 'RN1 – Km 45', level: 'critique', detectedAt: "Détecté par l'IA le 15 sept. 2026" },
-  { id: 'p2', name: 'Avenue Cheikh Anta Diop', level: 'vigilance', detectedAt: "Détecté par l'IA le 11 sept. 2026" },
-  { id: 'p3', name: 'Parallèles Assainis', level: 'vigilance', detectedAt: "Détecté par l'IA le 9 sept. 2026" },
+  { id: 'p1', name: 'RN3 – Km 12', level: 'critique', detectedAt: "Détecté par l'IA le 15 sept. 2026" },
+  { id: 'p2', name: 'Avenue centrale', level: 'vigilance', detectedAt: "Détecté par l'IA le 11 sept. 2026" },
+  { id: 'p3', name: 'Quartier résidentiel nord', level: 'vigilance', detectedAt: "Détecté par l'IA le 9 sept. 2026" },
 ]
 
 export interface DayStat {

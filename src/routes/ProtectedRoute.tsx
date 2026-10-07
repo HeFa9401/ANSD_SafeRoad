@@ -35,8 +35,9 @@ export function roleHome(role: UserRole): string {
     case 'conducteur':
       return PATHS.client.root
     case 'sous_admin':
-    case 'anaser':
       return PATHS.admin.root
+    case 'anaser':
+      return PATHS.anaser.root
     case 'super_admin':
       return PATHS.superAdmin.root
     default:

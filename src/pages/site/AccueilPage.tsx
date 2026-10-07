@@ -19,10 +19,10 @@ const KPIS: { value: number; decimals?: number; suffix?: string; label: string; 
 ]
 
 const FEATURES: [string, string, string][] = [
-  ['hub', 'Collecte IoT', 'Des boîtiers embarqués mesurent en continu les données des véhicules et de la route.'],
-  ['auto_awesome', 'Analyse IA', "Identifie les récurrences et les comportements à risque dans les données collectées."],
+  ['hub', 'Collecte IoT', 'Des boîtiers embarqués mesurent les conditions de conduite et les situations autour du véhicule..'],
+  ['auto_awesome', 'Validation des situations à risque', "Les données issues des différents capteurs sont croisées afin de vérifier qu’une situation détectée présente réellement un risque."],
   ['map', 'Carte interactive', 'Localise les zones à risque et leur niveau, à jour dès qu\u2019une validation est faite.'],
-  ['notifications_active', 'Alertes temps réel', 'Prévient les conducteurs à l\u2019approche d\u2019une zone signalée.'],
+  ['notifications_active', 'Alertes temps réel', 'Lorsqu\u2019une situation dangereuse est confirmée, le conducteur est averti directement à bord du véhicule.'],
 ]
 
 const PARTNERS = ['ANASER', 'Ministère des Transports', 'Sénégal Numérique', 'Orange Digital Center']
@@ -46,7 +46,7 @@ const NEWS: { image: string; category: string; date: string; title: string; exce
     image: newsModeleIaUrl,
     category: 'Intelligence artificielle',
     date: '25 août 2026',
-    title: "Ce que notre modèle d'IA détecte — et ne décide pas",
+    title: "Comment SafeRoad valide une situation à risque",
     excerpt: "L'analyse identifie les récurrences ; la validation d'une zone reste une décision humaine, réservée à l'ANASER.",
   },
 ]
@@ -106,16 +106,19 @@ export function AccueilPage() {
            * la carte. Seul le bloc des boutons repasse en pointer-events:auto.
            */}
           <div className="pointer-events-none">
-            <span className="text-kicker text-brand-400">IA · IoT · GPS · Radar Doppler</span>
+            <span className="text-kicker text-brand-400">SYSTÈME EMBARQUÉ · IoT · GPS · Radar Doppler</span>
             <h1 className="text-hero mt-5 text-white">
               SafeRoad <span className="text-brand-400">Sénégal</span>
             </h1>
             <p className="text-section-title mt-2 max-w-xl text-white">
-              La technologie au service de votre sécurité sur la route.
+            La technologie au service de la sécurité routière.
             </p>
             <p className="mt-5 max-w-lg text-[15px] leading-[1.7] text-white/[.78]">
-              SafeRoad est une plateforme intelligente utilisant l'IA et l'IoT pour détecter, analyser et signaler
-              les zones à risque en temps réel afin de contribuer à réduire les accidents au Sénégal.
+              SafeRoad est un système intelligent qui surveille les situations de conduite en temps réel 
+              à l'aide de boîtiers embarqués. Il détecte et analyse les situations potentiellement dangereuses,
+               alerte le
+               conducteur et exploite les données collectées pour identifier les risques routiers 
+               récurrents et contribuer à leur prévention.
             </p>
 
             <div className="pointer-events-auto mt-8 flex flex-wrap gap-3">
@@ -160,7 +163,7 @@ export function AccueilPage() {
         <div className="container-site">
           <Reveal>
             <span className="text-kicker text-brand-600">Comment ça marche</span>
-            <h2 className="text-section-title mt-2 max-w-xl text-ink">Quatre technologies, une seule mission</h2>
+            <h2 className="text-section-title mt-2 max-w-xl text-ink">De la détection à la prévention</h2>
           </Reveal>
 
           <div className="mt-10 grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(248px,1fr))]">
@@ -192,17 +195,17 @@ export function AccueilPage() {
               style={{ background: 'linear-gradient(160deg, #e7f5f0 0%, #ffffff 100%)' }}
             >
               <span className="text-kicker text-brand-600">Notre mission</span>
-              <h2 className="text-section-title mt-2 text-ink">Aider à décider, pas décider à la place</h2>
+              <h2 className="text-section-title mt-2 text-ink">Prévenir le risque avant qu'il ne devienne un accident</h2>
               <p className="mt-4 text-[15px] leading-[1.7] text-body">
-                SafeRoad mesure les données de conduite et de route, identifie les récurrences et prévient les
-                personnes concernées. La validation d'une zone reste une décision humaine, réservée aux
-                administrateurs habilités et à l'ANASER.
+                SafeRoad surveille les situations de conduite en temps réel, détecte et valide les situations potentiellement dangereuses
+                et alerte le conducteur lorsque cela est nécessaire. Les données collectées permettent ensuite d'identifier les risques
+                routiers récurrents et de contribuer aux actions de prévention.
               </p>
               <ul className="mt-6 flex flex-col gap-3">
                 {[
-                  ['straighten', 'Mesurer les données IoT, GPS et radar en continu'],
-                  ['search', 'Identifier les zones et comportements à risque'],
-                  ['shield', 'Prévenir les conducteurs avant une zone signalée'],
+                  ['straighten', 'Surveiller les conditions de conduite en temps réel'],
+                  ['search', 'Détecter et valider les situations potentiellement dangereuses'],
+                  ['shield', 'Prévenir le conducteur et contribuer à l’identification des zones à risque'],
                 ].map(([icon, label]) => (
                   <li key={label} className="flex items-center gap-3 text-sm font-semibold text-ink">
                     <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-white shadow-card">
@@ -221,7 +224,7 @@ export function AccueilPage() {
       <section className="bg-field py-16">
         <div className="container-site">
           <Reveal>
-            <p className="text-label-secondary m-0 text-center uppercase tracking-wide">Ils nous font confiance</p>
+            <p className="text-label-secondary m-0 text-center uppercase tracking-wide">Un système pensé pour les acteurs de la sécurité routière</p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 border-y border-line py-6">
               {PARTNERS.map((name) => (
                 <span key={name} className="text-sm font-extrabold tracking-tight text-faint">

@@ -64,7 +64,7 @@ export function TrajetsPage() {
     const totalAlerts = CLIENT_TRIPS.reduce((sum, t) => sum + t.alerts, 0)
     const avgScore = Math.round(CLIENT_TRIPS.reduce((sum, t) => sum + t.score, 0) / count)
     return [
-      { value: String(count), label: 'Trajets effectués', tint: '#0e9e7a' },
+      { value: String(count), label: 'Trajets effectués', tint: '#0F766E' },
       { value: `${totalKm} km`, label: 'Distance totale', tint: '#2b6cb0' },
       { value: `${avgScore}/100`, label: 'Score moyen', tint: scoreBadge(avgScore).tint },
       { value: String(totalAlerts), label: 'Alertes cumulées', tint: '#e8940c' },

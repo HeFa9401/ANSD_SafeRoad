@@ -45,29 +45,29 @@ export function Sidebar({ navItems, homeTo, roleLabel, roleMeta, cta, mobileOpen
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col overflow-hidden bg-navy-900 p-4 transition-transform duration-200 md:sticky md:top-0 md:z-0 md:h-screen md:w-20 md:translate-x-0 xl:w-60 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col overflow-hidden bg-sidebar p-4 transition-transform duration-200 md:sticky md:top-0 md:z-0 md:h-screen md:w-20 md:translate-x-0 xl:w-60 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-950/95 to-navy-950/85" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent" />
 
         <div className="relative flex h-full flex-col">
           <NavLink to={homeTo} className="flex items-center gap-3 px-1.5">
-            <span className="flex h-[42px] w-[42px] flex-none items-center justify-center overflow-hidden rounded-xl bg-white/5">
+            <span className="flex h-[42px] w-[42px] flex-none items-center justify-center overflow-hidden rounded-xl bg-navy-900">
               <img src={logoUrl} alt="SafeRoad" className="h-full w-full object-contain" />
             </span>
-            <span className={`${label} text-xl font-extrabold tracking-tight text-white`}>SafeRoad</span>
+            <span className={`${label} text-xl font-extrabold tracking-tight text-ink`}>SafeRoad</span>
           </NavLink>
 
           <div className={`mt-6 items-center gap-3 rounded-xl px-2 py-3 ${labelFlex}`}>
-            <span className="ic flex-none text-xl text-brand-400">account_circle</span>
+            <span className="ic flex-none text-xl text-brand-600">account_circle</span>
             <div className="min-w-0">
-              <p className="m-0 text-[13.5px] font-bold leading-tight text-white">{roleLabel}</p>
-              {roleMeta && <p className="m-0 mt-1 text-[11.5px] font-medium leading-none text-white/60">{roleMeta}</p>}
+              <p className="m-0 text-[13.5px] font-bold leading-tight text-ink">{roleLabel}</p>
+              {roleMeta && <p className="m-0 mt-1 text-[11.5px] font-medium leading-none text-ink/60">{roleMeta}</p>}
             </div>
           </div>
 
-          <nav className="mt-6 flex flex-col gap-1 xl:mt-5">
+          <nav className="mt-6 flex min-h-0 flex-col gap-1 overflow-y-auto [scrollbar-width:thin] xl:mt-5">
             {navItems.map((item) => (
               <NavLink
                 key={item.key}
@@ -75,8 +75,8 @@ export function Sidebar({ navItems, homeTo, roleLabel, roleMeta, cta, mobileOpen
                 end={item.end}
                 onClick={onCloseMobile}
                 className={({ isActive }) =>
-                  `flex min-h-[46px] items-center gap-3 rounded-[11px] px-3 py-3 text-[13.5px] font-semibold transition-colors ${
-                    isActive ? 'bg-brand-600 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                  `flex min-h-[46px] items-center gap-3 rounded-[11px] px-3 py-3 [@media(max-height:760px)]:min-h-[40px] [@media(max-height:760px)]:py-2 text-[13.5px] font-semibold transition-colors ${
+                    isActive ? 'bg-brand-600 text-white' : 'text-ink/75 hover:bg-white/55 hover:text-ink'
                   }`
                 }
               >

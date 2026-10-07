@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { RegionMap } from '@/components/admin/RegionMap'
 import { useAuth } from '@/context/AuthContext'
 import { ADMIN_REGION_ZONES, type RiskLevel } from '@/data/adminHome'
 import { CONNECTED_VEHICLES, VEHICLE_STATUS_META, type VehicleStatus } from '@/data/adminCarte'
+import { regionCenter, regionLabel } from '@/lib/regions'
 
 const LEVEL_META: Record<RiskLevel, { label: string; color: string }> = {
   critique: { label: 'Critique', color: '#dc3a2f' },
@@ -42,7 +43,8 @@ function LayerToggle({
 
 export function CarteRegionalePage() {
   const { user } = useAuth()
-  const region = user?.region ?? 'Dakar'
+  const region = regionLabel(user?.region)
+  const center = useMemo(() => regionCenter(user?.region), [user?.region])
   const [showZones, setShowZones] = useState(true)
   const [showVehicles, setShowVehicles] = useState(true)
 
@@ -50,7 +52,7 @@ export function CarteRegionalePage() {
 
   return (
     <div className="relative -mb-8" style={{ height: `calc(100vh - ${HEADER_HEIGHT_PX}px)` }}>
-      <RegionMap zones={ADMIN_REGION_ZONES} showZones={showZones} showVehicles={showVehicles} />
+      <RegionMap center={center} zones={ADMIN_REGION_ZONES} showZones={showZones} showVehicles={showVehicles} />
 
       {/* Bandeau flottant supérieur : titre + compteurs, et bascule des calques */}
       <div className="pointer-events-none absolute inset-x-4 top-4 z-[1000] flex flex-wrap items-start justify-between gap-3">

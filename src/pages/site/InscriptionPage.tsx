@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/auth'
 
 const PROFILES: { key: UserRole; label: string }[] = [
   { key: 'conducteur', label: 'Conducteur / Client' },
-  { key: 'sous_admin', label: 'Sous-Admin (ANASER / Forces de l’ordre)' },
+  { key: 'sous_admin', label: 'Admin Régional (ANASER / Forces de l’ordre)' },
   { key: 'super_admin', label: 'Super Admin' },
 ]
 
