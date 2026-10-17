@@ -8,7 +8,11 @@ export const PATHS = {
   articlePattern: '/actualites/:id',
   contact: '/contact',
   connexion: '/connexion',
-  inscription: '/inscription',
+  /** Seule porte d'entrée publique pour devenir conducteur (pas d'inscription libre). */
+  demandeInstallation: '/demande-installation',
+  /** Doit correspondre aux liens envoyés par email par le backend (FRONTEND_URL). */
+  motDePasseOublie: '/mot-de-passe-oublie',
+  reinitialiserMotDePasse: '/reinitialiser-mot-de-passe',
 
   client: {
     root: '/client',
@@ -27,6 +31,8 @@ export const PATHS = {
     zones: '/admin/zones',
     alertes: '/admin/alertes',
     boitiers: '/admin/boitiers',
+    demandes: '/admin/demandes',
+    profil: '/admin/profil',
     historique: '/admin/historique',
   },
   anaser: {
@@ -41,6 +47,9 @@ export const PATHS = {
     root: '/super-admin',
     utilisateurs: '/super-admin/utilisateurs',
     boitiers: '/super-admin/boitiers',
+    demandes: '/super-admin/demandes',
+    messages: '/super-admin/messages',
+    profil: '/super-admin/profil',
     monitoring: '/super-admin/monitoring',
     incidents: '/super-admin/incidents',
     signalements: '/super-admin/signalements',

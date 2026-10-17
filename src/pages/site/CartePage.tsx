@@ -1,14 +1,20 @@
 import { useMemo, useRef, useState } from 'react'
 import { LocalityMap, type LocalityMapHandle } from '@/components/carte/LocalityMap'
 import {
-  LOCALITIES,
+  localiteDepuisZone,
   REGIONS,
   ROAD_TYPE_LABELS,
   STATUS_META,
   type RoadType,
   type ZoneStatus,
 } from '@/data/localities'
+import { useEnDirect } from '@/hooks/useEnDirect'
 import { useNarrowGrid } from '@/hooks/useNarrowGrid'
+import { getResumePublic, getZonesPubliques } from '@/lib/api'
+import { REGIONS as REGIONS_SLUGS } from '@/lib/regions'
+
+/** Zones reconnues par l'ANASER (seules publiques) et compteurs nationaux par région. */
+const chargerCarte = () => Promise.all([getZonesPubliques(), getResumePublic()])
 
 const ROAD_TYPES: RoadType[] = ['autoroute', 'nationale', 'regionale', 'voirie_urbaine']
 const STATUSES: ZoneStatus[] = ['validee', 'a_examiner', 'observation', 'normale']
@@ -95,6 +101,9 @@ export function CartePage() {
   const [applied, setApplied] = useState<FilterState>(DEFAULT_FILTERS)
   const [gridRef, isNarrow] = useNarrowGrid<HTMLDivElement>(820)
   const mapRef = useRef<LocalityMapHandle>(null)
+  // Données réelles, rechargées toutes les 2 minutes.
+  const { donnees } = useEnDirect(chargerCarte, 120_000)
+  const LOCALITIES = useMemo(() => (donnees?.[0] ?? []).map(localiteDepuisZone), [donnees])
 
   /*
    * Un seul prédicat, appliqué une fois sur « Appliquer » plutôt qu'à
@@ -109,17 +118,22 @@ export function CartePage() {
       if (applied.status !== STATUS_ALL && loc.status !== applied.status) return false
       return true
     })
-  }, [applied])
+  }, [applied, LOCALITIES])
 
-  const counters = useMemo(
-    () => ({
+  // Compteurs réels de la région choisie (ou du pays) : les zones à l'examen et en observation ne
+  // sont que comptées, jamais placées sur la carte publique.
+  const counters = useMemo(() => {
+    const parRegion = donnees?.[1].par_region ?? {}
+    const slug = REGIONS_SLUGS.find((r) => r.label === applied.region)?.slug
+    const lignes = applied.region === REGION_ALL ? Object.values(parRegion) : slug && parRegion[slug] ? [parRegion[slug]] : []
+    const somme = (cle: 'zones_a_examiner' | 'zones_en_observation' | 'boitiers_actifs') => lignes.reduce((a, l) => a + l[cle], 0)
+    return {
       validee: filtered.filter((l) => l.status === 'validee').length,
-      aExaminer: filtered.filter((l) => l.status === 'a_examiner').length,
-      observation: filtered.filter((l) => l.status === 'observation').length,
-      boitiers: filtered.reduce((sum, l) => sum + l.boitiers, 0),
-    }),
-    [filtered],
-  )
+      aExaminer: somme('zones_a_examiner'),
+      observation: somme('zones_en_observation'),
+      boitiers: somme('boitiers_actifs'),
+    }
+  }, [filtered, donnees, applied.region])
 
   return (
     <div className="bg-field pb-16">
@@ -289,8 +303,8 @@ export function CartePage() {
           </div>
 
           <p className="text-[11.5px] text-faint">
-            Données de démonstration. L'architecture prévoit le branchement de la couche zones sur l'API SafeRoad
-            (mêmes champs, mêmes statuts, dernière détection en direct).
+            Seules les zones reconnues par l'ANASER sont affichées sur la carte ; les zones encore à l'examen ou en
+            observation sont seulement comptées.
           </p>
         </div>
       </div>

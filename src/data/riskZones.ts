@@ -1,3 +1,5 @@
+import type { ZoneApi } from '@/lib/api'
+
 export type ZoneStatus = 'validee' | 'observation' | 'normale'
 
 export interface RiskZone {
@@ -98,3 +100,17 @@ export const DEMO_ZONES: RiskZone[] = [
     note: 'Aucune récurrence notable sur les 90 derniers jours.',
   },
 ]
+
+/** Zone reconnue par l'ANASER (API publique) -> marqueur de l'aperçu de la page d'accueil. */
+export function riskZoneDepuisApi(z: ZoneApi): RiskZone {
+  return {
+    id: String(z.id),
+    name: z.nom || `Zone #${z.id}`,
+    region: z.region_libelle ?? '',
+    lat: z.latitude_centre,
+    lng: z.longitude_centre,
+    // Zones publiques = reconnues par l'ANASER : « validées ».
+    status: 'validee',
+    note: `${z.nombre_incidents} incidents détectés · reconnue par l'ANASER`,
+  }
+}

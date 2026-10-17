@@ -30,8 +30,12 @@ const FEATURES: [string, string][] = [
  * la vraie authentification.
  */
 function fakeDevToken(role: UserRole): string {
+  // Encodé en UTF-8 comme un vrai JWT, pour que decodeJwt() relise correctement "Démo".
   const b64url = (obj: unknown) =>
-    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(obj))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
   const header = b64url({ alg: 'none', typ: 'JWT' })
   const payload = b64url({
     sub: `dev-${role}`,
@@ -81,11 +85,11 @@ export function ConnexionPage() {
       // Conducteur vit dans un modèle Django séparé d'Administrateur (sous_admin /
       // super_admin / anaser) : deux endpoints de connexion distincts côté backend,
       // voir lib/api.ts (login vs loginConducteur).
-      const { access } =
+      const { access, refresh } =
         role === 'conducteur'
           ? await loginConducteurRequest(email.trim(), password)
           : await loginRequest(email.trim(), password)
-      login(access)
+      login(access, refresh)
       redirectAfterLogin(access)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Connexion impossible pour le moment.')
@@ -186,12 +190,12 @@ export function ConnexionPage() {
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
             <label className="block">
-              <span className="mb-2 block text-xs font-bold text-body">EMAIL OU NUMÉRO DE TÉLÉPHONE</span>
+              <span className="mb-2 block text-xs font-bold text-body">ADRESSE EMAIL</span>
               <input
-                type="text"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="username"
+                autoComplete="email"
                 className="w-full rounded-[11px] border-[1.5px] border-line-field bg-field px-3.5 py-3 text-sm font-medium text-ink outline-none focus:border-brand-600"
               />
             </label>
@@ -227,9 +231,12 @@ export function ConnexionPage() {
                 />
                 Se souvenir de moi
               </label>
-              <a href="#" className="font-bold text-brand-600 hover:text-brand-700">
+              <Link
+                to={`${PATHS.motDePasseOublie}?type=${role === 'conducteur' ? 'conducteur' : 'personnel'}`}
+                className="font-bold text-brand-600 hover:text-brand-700"
+              >
                 Mot de passe oublié ?
-              </a>
+              </Link>
             </div>
 
             {error && (
@@ -269,9 +276,9 @@ export function ConnexionPage() {
           </button>
 
           <p className="mt-7 text-center text-sm text-body">
-            Vous n'avez pas de compte ?{' '}
-            <Link to={PATHS.inscription} className="font-bold text-brand-600 hover:text-brand-700">
-              Inscription
+            Pas encore équipé ?{' '}
+            <Link to={PATHS.demandeInstallation} className="font-bold text-brand-600 hover:text-brand-700">
+              Demander un boîtier
             </Link>
           </p>
 

@@ -1,17 +1,28 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useAuth } from '@/context/AuthContext'
 import {
-  TAUX_RECURRENCE_7J,
-  ZONES_RISQUE,
-  ZONES_TENDANCES,
+  zoneRisqueDepuisApi,
+  type CommentaireZone,
   type PointEvolution,
   type RiskLevel,
   type StatutValidation,
-  type ZoneRisque,
+  type ZoneRisqueReelle,
 } from '@/data/adminZones'
+import { DECISIONS_ZONE, type DecisionZoneSA } from '@/data/superAdminZones'
+import { useEnDirect } from '@/hooks/useEnDirect'
+import { ApiError, changerStatutZone, getHistoriqueZone, getIncidents, getZones } from '@/lib/api'
 import { formatCoords, offsetLatLng, regionCenter, regionLabel } from '@/lib/regions'
+import { STATUT_ZONE_META } from '@/lib/zones'
+
+/** Zones visibles du compte (sa région, ou tout le pays) et incidents qui les expliquent. */
+const chargerZones = () => Promise.all([getZones(), getIncidents(1000)])
+const NATIONAL_CENTER: [number, number] = [14.45, -14.6]
+const ROLE_LIBELLE: Record<string, string> = { admin: 'Admin régional', super_admin: 'Super admin', anaser: 'ANASER' }
+
+/** « +2 », « -1 », « 0 » */
+const ecart = (n: number) => (n > 0 ? `+${n}` : String(n))
 
 const LEVEL_META: Record<RiskLevel, { label: string; color: string; soft: string; text: string }> = {
   critique: { label: 'Critique', color: '#dc3a2f', soft: '#fdeeec', text: '#dc3a2f' },
@@ -70,15 +81,74 @@ function EvolutionChart({ data }: { data: PointEvolution[] }) {
   )
 }
 
-export function ZonesPage() {
+/**
+ * Zones à risque. Admin régional : sa région (filtrée par le backend), validation technique.
+ * `national` : tout le pays (ANASER, qui reconnaît officiellement les zones soumises).
+ */
+export function ZonesPage({ national = false }: { national?: boolean }) {
   const { user } = useAuth()
-  const region = regionLabel(user?.region)
-  const center = useMemo(() => regionCenter(user?.region), [user?.region])
+  const region = national ? 'Sénégal' : regionLabel(user?.region)
+  const center = useMemo(() => (national ? NATIONAL_CENTER : regionCenter(user?.region)), [national, user?.region])
 
-  const [zones, setZones] = useState<ZoneRisque[]>(ZONES_RISQUE)
+  // Données réelles, rechargées toutes les 30 s.
+  const { donnees, erreur, recharger } = useEnDirect(chargerZones, 30_000)
+  const zones = useMemo<ZoneRisqueReelle[]>(() => {
+    const [zs, incs] = donnees ?? [[], []]
+    return zs.map((z) => zoneRisqueDepuisApi(z, incs, center))
+  }, [donnees, center])
   const [filtre, setFiltre] = useState<Filtre>('toutes')
-  const [selectedId, setSelectedId] = useState<string>(ZONES_RISQUE[0].id)
+  const [selectedId, setSelectedId] = useState<string>('')
   const [tuiles, setTuiles] = useState<'plan' | 'satellite'>('plan')
+  const [commentaires, setCommentaires] = useState<Record<string, CommentaireZone[]>>({})
+  const [erreurAction, setErreurAction] = useState('')
+
+  /** Décisions permises au rôle connecté depuis le statut réel de la zone. */
+  const decisionsOf = (z: ZoneRisqueReelle): DecisionZoneSA[] =>
+    DECISIONS_ZONE[z.api.statut_validation].filter((d) => user?.role && (d.roles as string[]).includes(user.role))
+  const principale = (z: ZoneRisqueReelle) => decisionsOf(z).find((d) => !d.motif)
+
+  /* Tendances réelles : zones identifiées ces 7 derniers jours vs les 7 précédents, et part des
+     zones qui ont encore des incidents cette semaine (taux de récurrence). */
+  const ZONES_TENDANCES = useMemo(() => {
+    const semaine = (z: ZoneRisqueReelle, debut: number, fin: number) => {
+      const age = (Date.now() - Date.parse(z.api.date_creation)) / 86_400_000
+      return age >= debut && age < fin
+    }
+    const t = (niveau: RiskLevel) =>
+      ecart(zones.filter((z) => z.niveau === niveau && semaine(z, 0, 7)).length - zones.filter((z) => z.niveau === niveau && semaine(z, 7, 14)).length)
+    return { critique: t('critique'), vigilance: t('vigilance'), normale: t('normale') }
+  }, [zones])
+  // Part des zones où des incidents se répètent (7 derniers jours), comparée aux 7 jours précédents.
+  const TAUX_RECURRENCE_7J = useMemo(() => {
+    const incs = donnees?.[1] ?? []
+    const taux = (debut: number, fin: number) => {
+      if (zones.length === 0) return 0
+      const actives = zones.filter((z) =>
+        incs.some((i) => {
+          const age = (Date.now() - Date.parse(i.horodatage)) / 86_400_000
+          return i.zone === z.api.id && age >= debut && age < fin
+        }),
+      ).length
+      return Math.round((actives / zones.length) * 100)
+    }
+    const valeur = taux(0, 7)
+    return { valeur, tendance: `${ecart(valeur - taux(7, 14))}%` }
+  }, [zones, donnees])
+
+  const chargerCommentaires = useCallback(async (z: ZoneRisqueReelle) => {
+    const lignes = await getHistoriqueZone(z.api.id).catch(() => [])
+    setCommentaires((prev) => ({
+      ...prev,
+      [z.id]: lignes
+        .slice()
+        .reverse()
+        .map((h) => ({
+          auteur: `${h.acteur_nom ?? 'Compte supprimé'} (${ROLE_LIBELLE[h.role_acteur] ?? h.role_acteur})`,
+          date: new Date(h.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }),
+          texte: `${h.statut_precedent_libelle} → ${h.statut_nouveau_libelle}${h.commentaire ? ` : ${h.commentaire}` : ''}`,
+        })),
+    }))
+  }, [])
 
   const counts = useMemo(
     () => ({
@@ -95,12 +165,39 @@ export function ZonesPage() {
     [zones, filtre],
   )
 
-  const selected = zones.find((z) => z.id === selectedId) ?? zones[0]
-  const selectedLatLng = offsetLatLng(center, selected.offset)
+  const selected: ZoneRisqueReelle | undefined = zones.find((z) => z.id === selectedId) ?? zones[0]
+  const selectedLatLng = selected ? offsetLatLng(center, selected.offset) : center
+  const selectedKey = selected?.id ?? ''
+  const selectedStatut = selected?.api.statut_validation ?? ''
 
-  // TODO backend : PATCH /api/v1/zones/{id}/valider/ (réservé aux rôles admin/super_admin)
+  useEffect(() => {
+    if (selected) void chargerCommentaires(selected)
+    // Rechargé quand la zone ouverte ou son statut changent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKey, selectedStatut, chargerCommentaires])
+
+  /** Décision enregistrée par le backend (rôle, transition et motif vérifiés). */
+  const decider = async (z: ZoneRisqueReelle, d: DecisionZoneSA) => {
+    let commentaire = ''
+    if (d.motif) {
+      commentaire = (window.prompt(`${d.libelle} — motif (obligatoire) :`) ?? '').trim()
+      if (!commentaire) return
+    }
+    try {
+      await changerStatutZone(z.api.id, d.vers, commentaire)
+      setErreurAction('')
+      await recharger()
+      await chargerCommentaires(z)
+    } catch (err) {
+      setErreurAction(err instanceof ApiError ? err.message : 'Décision non enregistrée : serveur injoignable.')
+    }
+  }
+
+  /** « Valider » : la décision principale du rôle (valider techniquement, soumettre, reconnaître…). */
   const handleValider = (id: string) => {
-    setZones((prev) => prev.map((z) => (z.id === id ? { ...z, statut: 'validee' } : z)))
+    const z = zones.find((x) => x.id === id)
+    const d = z && principale(z)
+    if (z && d) void decider(z, d)
   }
 
   const kpiCards: { key: string; icon: string; soft: string; tint: string; value: string; label: string; trend: string }[] = [
@@ -180,6 +277,7 @@ export function ZonesPage() {
           </span>
         </div>
       </div>
+      {erreur && <p className="mx-6 mt-2 text-xs font-semibold text-danger-600">{erreur}</p>}
 
       <section className="mx-6 mt-4.5 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         {kpiCards.map((kpi) => (
@@ -365,10 +463,11 @@ export function ZonesPage() {
                       <td className="px-3 py-3 text-body">{zone.incidents}</td>
                       <td className="px-3 py-3 text-body">{zone.lastDetection}</td>
                       <td className="px-3 py-3">
-                        {zone.statut === 'en_cours' ? (
+                        {principale(zone) ? (
                           <button
                             type="button"
                             onClick={() => handleValider(zone.id)}
+                            title={principale(zone)?.libelle}
                             className="rounded-full bg-brand-600 px-3 py-1.5 text-[10.5px] font-bold text-white hover:bg-brand-700"
                           >
                             Valider
@@ -378,7 +477,7 @@ export function ZonesPage() {
                             className="rounded-md px-1.5 py-0.5 text-[10.5px] font-bold"
                             style={{ background: statutMeta.soft, color: statutMeta.text }}
                           >
-                            {statutMeta.label}
+                            {STATUT_ZONE_META[zone.api.statut_validation].label}
                           </span>
                         )}
                       </td>
@@ -428,11 +527,11 @@ export function ZonesPage() {
             <EvolutionChart data={selected.evolution} />
 
             <p className="m-0 mb-2 mt-4 text-xs font-extrabold text-ink">Commentaires récents</p>
-            {selected.commentaires.length === 0 ? (
+            {(commentaires[selected.id] ?? []).length === 0 ? (
               <p className="m-0 text-[11.5px] text-faint">Aucun commentaire pour cette zone.</p>
             ) : (
               <ul className="flex flex-col gap-2.5">
-                {selected.commentaires.map((c, i) => (
+                {(commentaires[selected.id] ?? []).map((c, i) => (
                   <li key={i} className="rounded-xl bg-page p-3 text-[11.5px] text-body">
                     <p className="m-0">{c.texte}</p>
                     <p className="m-0 mt-1 text-[10.5px] font-semibold text-faint">
@@ -446,12 +545,25 @@ export function ZonesPage() {
             <button
               type="button"
               onClick={() => handleValider(selected.id)}
-              disabled={selected.statut === 'validee'}
+              disabled={!principale(selected)}
               className="mt-4.5 flex w-full items-center justify-center gap-2 rounded-[11px] bg-brand-600 py-2.5 text-[12.5px] font-bold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="ic text-base">verified</span>
-              {selected.statut === 'validee' ? 'Zone déjà validée' : 'Marquer comme zone à risque'}
+              {principale(selected)?.libelle ?? STATUT_ZONE_META[selected.api.statut_validation].label}
             </button>
+            {decisionsOf(selected)
+              .filter((d) => d.motif)
+              .map((d) => (
+                <button
+                  key={d.vers}
+                  type="button"
+                  onClick={() => void decider(selected, d)}
+                  className={`mt-2 w-full text-center text-[11.5px] font-bold ${d.danger ? 'text-danger-600' : 'text-brand-600'}`}
+                >
+                  {d.libelle}
+                </button>
+              ))}
+            {erreurAction && <p className="m-0 mt-2 text-[11px] font-semibold text-danger-600">{erreurAction}</p>}
           </div>
         )}
       </section>
